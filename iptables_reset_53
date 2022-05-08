@@ -1,0 +1,176 @@
+#!/bin/bash
+iptables -P INPUT ACCEPT
+iptables -P FORWARD ACCEPT
+iptables -P OUTPUT ACCEPT
+iptables -t nat -F
+iptables -t mangle -F
+iptables -F
+iptables -X
+
+
+##IPSET
+ipset flush
+ipset create torrent-sites hash:ip 2> /dev/null
+TORRENT_SITES_IPS=$(getent ahosts \
+        yts.mx \
+        yts.rs \
+        yts.vc \
+        yts.pm \
+        yts.ai \
+        yts.io \
+        yts.ae \
+        yts.ag \
+        eztv.re \
+        rarbg.to \
+        1337x.to \
+        yts.movie \
+        yifyddl.co \
+        zooqle.com \
+        torlock.cc \
+        torlock.com \
+        demonoid.is \
+        yts-movie.com \
+        pirate-bay.in \
+        dontorrent.app \
+        thepiratebay.by \
+        yify-movies.net \
+        torrentz2eu.org \
+        limetorrents.pro \
+        thepiratebay.org \
+        yts.unblockit.win \
+        yts.unblockit.win \
+        yts.nocensor.club \
+        yifytorrenthd.net \
+        tpbproxypirate.com \
+        thepirates-bay.com \
+        thepiratebay-3.org \
+        thepiratebay.us.org \
+        thepiratebay.us.com \
+        thepiratebay.co.com \
+        pirateproxy-bay.com \
+        pirate-bay-proxy.org \
+        torrentdownloads.mrunblock.xyz \
+        |grep : -v|cut -d" " -f1|sort|uniq)
+for THOST in $TORRENT_SITES_IPS
+do
+    ipset add torrent-sites $THOST
+done
+
+#TORRENT
+# Delete all existing rules
+#iptables -F
+
+# Set default chain policies
+#iptables -P INPUT DROP
+#iptables -P FORWARD DROP
+#iptables -P OUTPUT DROP
+
+# Allow ALL incoming SSH
+#iptables -A INPUT -i eth0 -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+#iptables -A OUTPUT -o eth0 -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
+
+# MultiPorts (Allow incoming SSH, HTTP, and HTTPS)
+#iptables -A INPUT -i eth0 -p tcp -m multiport --dports 22,80,443,2052,7777,7897,8080,8000,8777,8888 -m state --state NEW,ESTABLISHED -j ACCEPT
+#iptables -A OUTPUT -o eth0 -p tcp -m multiport --sports 22,80,443,2052,7777,7897,8080,8000,8777,8888 -m state --state ESTABLISHED -j ACCEPT
+
+# Allow All custom proxy ports
+#iptables -A INPUT -i eth0 -p tcp -m multiport --dports 800:820 -m state --state NEW,ESTABLISHED -j ACCEPT
+#iptables -A OUTPUT -o eth0 -p tcp -m multiport --sports 800:820 -m state --state ESTABLISHED -j ACCEPT
+
+# Allow outgoing SSH
+#iptables -A OUTPUT -o eth0 -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+#iptables -A INPUT -i eth0 -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
+
+# Allow outgoing HTTPS
+#iptables -A OUTPUT -o eth0 -p tcp --dport 443 -m state --state NEW,ESTABLISHED -j ACCEPT
+#iptables -A INPUT -i eth0 -p tcp --sport 443 -m state --state ESTABLISHED -j ACCEPT
+
+#iptables -A OUTPUT -o eth0 -p tcp --dport 7897 -m state --state NEW,ESTABLISHED -j ACCEPT
+#iptables -A INPUT -i eth0 -p tcp --sport 7897 -m state --state ESTABLISHED -j ACCEPT
+
+#iptables -A OUTPUT -o eth0 -p tcp --dport 80 -m state --state NEW,ESTABLISHED -j ACCEPT
+#iptables -A INPUT -i eth0 -p tcp --sport 80 -m state --state ESTABLISHED -j ACCEPT
+
+#iptables -A OUTPUT -o eth0 -p tcp --dport 8080 -m state --state NEW,ESTABLISHED -j ACCEPT
+#iptables -A INPUT -i eth0 -p tcp --sport 8080 -m state --state ESTABLISHED -j ACCEPT
+
+#iptables -A OUTPUT -o eth0 -p tcp --dport 2052 -m state --state NEW,ESTABLISHED -j ACCEPT
+#iptables -A INPUT -i eth0 -p tcp --sport 2052 -m state --state ESTABLISHED -j ACCEPT
+
+#iptables -A OUTPUT -o eth0 -p tcp --dport 7777 -m state --state NEW,ESTABLISHED -j ACCEPT
+#iptables -A INPUT -i eth0 -p tcp --sport 7777 -m state --state ESTABLISHED -j ACCEPT
+
+#iptables -A OUTPUT -o eth0 -p tcp --dport 8080 -m state --state NEW,ESTABLISHED -j ACCEPT
+#iptables -A INPUT -i eth0 -p tcp --sport 8080 -m state --state ESTABLISHED -j ACCEPT
+
+#iptables -A OUTPUT -o eth0 -p tcp --dport 8000 -m state --state NEW,ESTABLISHED -j ACCEPT
+#iptables -A INPUT -i eth0 -p tcp --sport 8000 -m state --state ESTABLISHED -j ACCEPT
+
+#iptables -A OUTPUT -o eth0 -p tcp --dport 8777 -m state --state NEW,ESTABLISHED -j ACCEPT
+#iptables -A INPUT -i eth0 -p tcp --sport 8777 -m state --state ESTABLISHED -j ACCEPT
+
+#iptables -A OUTPUT -o eth0 -p tcp --dport 8888 -m state --state NEW,ESTABLISHED -j ACCEPT
+#iptables -A INPUT -i eth0 -p tcp --sport 8888 -m state --state ESTABLISHED -j ACCEPT
+
+# Ping from inside to outside
+#iptables -A OUTPUT -p icmp --icmp-type echo-request -j ACCEPT
+#iptables -A INPUT -p icmp --icmp-type echo-reply -j ACCEPT
+
+# Ping from outside to inside
+#iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
+#iptables -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
+
+# Allow loopback access
+#iptables -A INPUT -i lo -j ACCEPT
+#iptables -A OUTPUT -o lo -j ACCEPT
+
+# Allow outbound DNS
+#iptables -A OUTPUT -p udp -o eth0 --dport 53 -j ACCEPT
+#iptables -A INPUT -p udp -i eth0 --sport 53 -j ACCEPT
+
+# Prevent DoS attack
+#iptables -A INPUT -p tcp --dport 80 -m limit --limit 25/minute --limit-burst 100 -j ACCEPT
+
+# Log dropped packets
+#iptables -N LOGGING
+#iptables -A INPUT -j LOGGING
+#iptables -A LOGGING -m limit --limit 2/min -j LOG --log-prefix "IPTables Packet Dropped: " --log-level 7
+#iptables -A LOGGING -j DROP
+
+#SLOWDNS
+iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+iptables -I INPUT -p udp --dport 53 -j ACCEPT 
+iptables -t nat -I PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53
+
+systemctl disable systemd-resolved.service && systemctl stop systemd-resolved.service && mv /etc/resolv.conf /etc/resolv.conf.bkp && echo "nameserver 1.1.1.1" > /etc/resolv.conf
+systemctl enable systemd-resolved.service && systemctl start systemd-resolved.service
+systemctl stop systemd-resolved
+systemctl disable systemd-resolved
+
+#Block torrent trafic
+iptables -A FORWARD -m string --algo bm --string "BitTorrent" -j DROP
+iptables -A FORWARD -m string --algo bm --string "BitTorrent protocol" -j DROP
+iptables -A FORWARD -m string --algo bm --string "peer_id=" -j DROP
+iptables -A FORWARD -m string --algo bm --string ".torrent" -j DROP
+iptables -A FORWARD -m string --algo bm --string "announce.php?passkey=" -j DROP
+iptables -A FORWARD -m string --algo bm --string "torrent" -j DROP
+iptables -A FORWARD -m string --algo bm --string "announce" -j DROP
+iptables -A FORWARD -m string --algo bm --string "info_hash" -j DROP
+
+iptables -I FORWARD -p tcp -m ipp2p --bit -j DROP
+iptables -I FORWARD -p udp -m ipp2p --bit -j DROP
+iptables -A FORWARD -p tcp -m ipp2p --edk -j DROP  # Bloqueia eDonkey e eMule
+iptables -A FORWARD -p udp -m ipp2p --edk -j DROP
+iptables -A FORWARD -m ipp2p --edk --bit -j DROP
+
+# Torrent Sites
+iptables -A FORWARD -m set --match-set torrent-sites dst -j DROP
+# Torrent Default Ports (6881:6889:6969)
+iptables -A FORWARD -p tcp -m multiport --dport 1024:2048,2560:3001,3724,6112,6800:7000 -j DROP
+iptables -A FORWARD -p udp -m multiport --dport 1024:2048,2560:3001,3724,6112,6800:7000 -j DROP
+
+# To Prevent Mail Spam/Hacking
+iptables -A FORWARD -p tcp -m multiport --dport 25,26,60:70,110,143,389,465,587 -j DROP
+iptables -A FORWARD -p tcp -m multiport --dport 636,993,995,2525,5010,5060,8085 -j DROP
+iptables -A FORWARD -p udp -m multiport --dport 25,26,60:70,110,143,389,465,587 -j DROP
+iptables -A FORWARD -p udp -m multiport --dport 636,993,995,2525,5010,5060,8085 -j DROP
